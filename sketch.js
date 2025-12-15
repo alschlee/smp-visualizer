@@ -172,10 +172,10 @@ function drawClouds(speed) {
       cloud.y = random(50, 200);
     }
     noStroke();
-    // 안보임,, 확인하기
     fill(50, 40, 80, 100);
     ellipse(cloud.x, cloud.y, cloud.size, cloud.size * 0.6);
     ellipse(cloud.x + 20, cloud.y, cloud.size * 0.8, cloud.size * 0.5);
+    ellipse(cloud.x - 20, cloud.y, cloud.size * 0.7, cloud.size * 0.5);
   }
 }
 
