@@ -7,6 +7,7 @@ let scrollSpeed = 0;
 let buildings = [];
 let streetLights = [];
 let trees = [];
+let stars = [];
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -20,12 +21,10 @@ function setup() {
   amplitude = new p5.Amplitude();
   amplitude.setInput(song);
 
-  // 건물
   for (let i = 0; i < 8; i++) {
     buildings.push(createBuilding(i * 150 + random(-20, 20)));
   }
 
-  // 가로등
   for (let i = 0; i < 6; i++) {
     streetLights.push({
       x: i * 200 + random(-30, 30),
@@ -33,12 +32,21 @@ function setup() {
     });
   }
 
-  // 나무 생성
   for (let i = 0; i < 12; i++) {
     trees.push({
       x: i * 100 + random(-20, 20),
       height: random(40, 80),
       width: random(15, 25)
+    });
+  }
+
+  // 별 생성
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: random(width),
+      y: random(height * 0.5),
+      size: random(1, 3),
+      twinkle: random(100, 255)
     });
   }
 }
@@ -50,16 +58,14 @@ function draw() {
   let targetSpeed = map(level * 150, 0, 150, 2, 30);
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
-  // 건물 그리기
+  drawStars(scrollSpeed * 0.3);
   drawBuildings(scrollSpeed * 0.8);
   drawTrees(scrollSpeed * 1.2);
 
-  // 도로 그리기
   noStroke();
   fill(40, 40, 50);
   rect(0, roadY, width, height - roadY);
 
-  // 차선
   stroke(255, 200);
   strokeWeight(2);
   for (let i = 0; i < 20; i++) {
@@ -67,14 +73,11 @@ function draw() {
     line(x, roadY + 50, x + 30, roadY + 50);
   }
 
-  // 가로등 그리기
   drawStreetLights(scrollSpeed);
 
-  // 자동차 그리기
   push();
   translate(carX, carY);
 
-  // 바운스 효과
   let bounce = map(level, 0, 1, 0, 5);
   translate(0, sin(frameCount * 0.5) * bounce);
 
@@ -115,7 +118,6 @@ function drawNightSky() {
   let topColor = [15, 10, 40];
   let bottomColor = [40, 20, 60];
 
-  // 상단 그라데이션
   for (let y = 0; y < height * 0.6; y++) {
     let inter = map(y, 0, height * 0.6, 0, 1);
     let c = lerpColor(
@@ -127,7 +129,6 @@ function drawNightSky() {
     line(0, y, width, y);
   }
 
-  // 하단 그라데이션
   for (let y = height * 0.6; y < roadY; y++) {
     let inter = map(y, height * 0.6, roadY, 0, 1);
     let c = lerpColor(
@@ -137,6 +138,19 @@ function drawNightSky() {
     );
     stroke(c);
     line(0, y, width, y);
+  }
+}
+
+function drawStars(speed) {
+  for (let star of stars) {
+    star.x -= speed;
+    if (star.x < -10) {
+      star.x = width + 10;
+      star.y = random(height * 0.5);
+    }
+    noStroke();
+    fill(255, star.twinkle);
+    ellipse(star.x, star.y, star.size);
   }
 }
 
@@ -166,7 +180,6 @@ function drawBuildings(speed) {
 
     rect(building.x, roadY - building.height, building.width, building.height);
 
-    // 창문
     fill(200, 150, 50, 150);
     let windowCols = 3;
     let windowRows = building.windows;
@@ -235,9 +248,7 @@ function drawWheel(x, y, rotation) {
 
   stroke(150);
   strokeWeight(2);
-
   for (let i = 0; i < 5; i++) {
-
     let angle = (360 / 5) * i;
     line(0, 0, cos(angle) * 6, sin(angle) * 6);
   }
