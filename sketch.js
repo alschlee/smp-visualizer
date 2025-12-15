@@ -2,6 +2,8 @@ let roadY;
 let carX = 320;
 let carY;
 let song;
+let amplitude;
+let scrollSpeed = 0;
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -11,6 +13,9 @@ function setup() {
   createCanvas(800, 600);
   roadY = height * 0.7;
   carY = roadY - 40;
+
+  amplitude = new p5.Amplitude();
+  amplitude.setInput(song);
 }
 
 function draw() {
@@ -22,6 +27,10 @@ function draw() {
     line(0, y, width, y);
   }
 
+  let level = amplitude.getLevel();
+  let targetSpeed = map(level * 150, 0, 150, 2, 30);
+  scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
+
   // 도로 그리기
   noStroke();
   fill(40, 40, 50);
@@ -31,13 +40,17 @@ function draw() {
   stroke(255, 200);
   strokeWeight(2);
   for (let i = 0; i < 20; i++) {
-    let x = (i * 60 - frameCount % 60) % width;
+    let x = (i * 60 - (frameCount * scrollSpeed * 0.5) % 60) % width;
     line(x, roadY + 50, x + 30, roadY + 50);
   }
 
   // 자동차 그리기
   push();
   translate(carX, carY);
+
+  // 바운스 효과
+  let bounce = map(level, 0, 1, 0, 5);
+  translate(0, sin(frameCount * 0.5) * bounce);
 
   noStroke();
   fill(0, 0, 0, 100);
@@ -53,8 +66,8 @@ function draw() {
   rect(-20, -10, 15, 18, 3);
   rect(5, -10, 15, 18, 3);
 
-  drawWheel(-20, 35, frameCount * 0.1);
-  drawWheel(20, 35, frameCount * 0.1);
+  drawWheel(-20, 35, frameCount * scrollSpeed * 0.03);
+  drawWheel(20, 35, frameCount * scrollSpeed * 0.03);
 
   pop();
 
