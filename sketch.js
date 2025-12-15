@@ -24,6 +24,7 @@ let skyColors = {
   day2: { top: [170, 190, 230], bottom: [200, 210, 240] },
   day: { top: [135, 206, 250], bottom: [200, 230, 255] }
 };
+let playbackRate = 1.0;
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -132,7 +133,25 @@ function draw() {
   currentSkyColors.bottom[1] = lerp(currentSkyColors.bottom[1], targetSkyColors.bottom[1], 0.005);
   currentSkyColors.bottom[2] = lerp(currentSkyColors.bottom[2], targetSkyColors.bottom[2], 0.005);
 
-  let targetSpeed = map(level * 150 + treble * 1.5, 0, 500, 2, 50);
+  // 방향키로 재생 속도 조절
+  if (song.isPlaying()) {
+    if (keyIsDown(UP_ARROW)) {
+      playbackRate = constrain(playbackRate + 0.01, 0.5, 2.0);
+    }
+    if (keyIsDown(DOWN_ARROW)) {
+      playbackRate = constrain(playbackRate - 0.01, 0.5, 2.0);
+    }
+    if (keyIsDown(LEFT_ARROW)) {
+      playbackRate = constrain(playbackRate - 0.02, 0.5, 2.0);
+    }
+    if (keyIsDown(RIGHT_ARROW)) {
+      playbackRate = constrain(playbackRate + 0.02, 0.5, 2.0);
+    }
+    song.rate(playbackRate);
+  }
+
+  let speedMultiplier = playbackRate;
+  let targetSpeed = map(level * 150 + treble * 1.5, 0, 500, 2, 50) * speedMultiplier;
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
   if (timeOfDay === 'night' || timeOfDay === 'night2' || timeOfDay === 'night3') {
@@ -164,6 +183,12 @@ function draw() {
     textAlign(CENTER);
     text("클릭해서 드라이브 시작하기", width / 2, height / 2);
   }
+
+  // 속도 정보 표시
+  fill(255, 150);
+  textAlign(LEFT);
+  textSize(12);
+  text(`재생속도: ${playbackRate.toFixed(2)}x`, 10, 20);
 }
 
 function drawNightSky() {
