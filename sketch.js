@@ -1,6 +1,11 @@
 let roadY;
 let carX = 320;
 let carY;
+let song;
+
+function preload() {
+  song = loadSound('blinding_lights.mp3');
+}
 
 function setup() {
   createCanvas(800, 600);
@@ -52,6 +57,13 @@ function draw() {
   drawWheel(20, 35, frameCount * 0.1);
 
   pop();
+
+  if (!song.isPlaying()) {
+    fill(255, 255, 100);
+    textSize(24);
+    textAlign(CENTER);
+    text("클릭해서 드라이브 시작하기", width / 2, height / 2);
+  }
 }
 
 function drawWheel(x, y, rotation) {
@@ -78,4 +90,12 @@ function drawWheel(x, y, rotation) {
   ellipse(0, 0, 6);
 
   pop();
+}
+
+function mousePressed() {
+  if (song.isPlaying()) {
+    song.pause();
+  } else {
+    song.play();
+  }
 }
