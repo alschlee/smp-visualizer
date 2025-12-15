@@ -33,7 +33,8 @@ function setup() {
   for (let i = 0; i < 6; i++) {
     streetLights.push({
       x: i * 200 + random(-30, 30),
-      brightness: 150
+      brightness: 150,
+      glowSize: 30
     });
   }
 
@@ -54,7 +55,6 @@ function setup() {
     });
   }
 
-  // 구름 생성
   for (let i = 0; i < 5; i++) {
     clouds.push({
       x: random(width),
@@ -92,7 +92,7 @@ function draw() {
     line(x, roadY + 50, x + 30, roadY + 50);
   }
 
-  drawStreetLights(scrollSpeed);
+  drawStreetLights(mid, scrollSpeed);
 
   push();
   translate(carX, carY);
@@ -249,12 +249,15 @@ function drawTrees(speed) {
   }
 }
 
-function drawStreetLights(speed) {
+function drawStreetLights(mid, speed) {
   for (let light of streetLights) {
     light.x -= speed;
     if (light.x < -50) {
       light.x = width + random(150, 250);
     }
+
+    light.brightness = lerp(light.brightness, map(mid, 0, 255, 50, 255), 0.3);
+    light.glowSize = map(mid, 0, 255, 10, 100);
 
     stroke(80);
     strokeWeight(4);
@@ -262,11 +265,16 @@ function drawStreetLights(speed) {
     line(light.x, roadY - 120, light.x + 30, roadY - 130);
 
     noStroke();
-    fill(255, 255, 200, 100);
-    ellipse(light.x + 30, roadY - 130, 40);
+    for (let i = 5; i > 0; i--) {
+      fill(50, 100, light.brightness, map(i, 5, 1, 20, 150));
+      ellipse(light.x + 30, roadY - 130, light.glowSize * i * 0.5);
+    }
 
-    fill(255, 255, 150);
-    ellipse(light.x + 30, roadY - 130, 20);
+    fill(60, 100, 255);
+    ellipse(light.x + 30, roadY - 130, light.glowSize * 0.4);
+
+    fill(50, 80, light.brightness, map(mid, 0, 255, 50, 180));
+    ellipse(light.x + 15, roadY + 5, light.glowSize * 2, 40);
   }
 }
 
