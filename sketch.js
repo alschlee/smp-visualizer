@@ -10,6 +10,13 @@ let trees = [];
 let stars = [];
 let clouds = [];
 let fft;
+let timeOfDay = 'night';
+let currentSkyColors = { top: [15, 10, 40], bottom: [40, 20, 60] };
+let targetSkyColors = { top: [15, 10, 40], bottom: [40, 20, 60] };
+let skyColors = {
+  night: { top: [15, 10, 40], bottom: [40, 20, 60] },
+  day: { top: [135, 206, 250], bottom: [200, 230, 255] }
+};
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -72,10 +79,34 @@ function draw() {
   let mid = fft.getEnergy(400, 2600);
   let treble = fft.getEnergy(5000, 20000);
 
+  // 시간대 변화
+  if (song.isPlaying()) {
+    let currentTime = song.currentTime();
+    let duration = song.duration();
+
+    if (currentTime < duration * 0.6) {
+      timeOfDay = 'night';
+    } else {
+      timeOfDay = 'day';
+    }
+  }
+
+  // 하늘 색상 전환
+  targetSkyColors = skyColors[timeOfDay];
+  currentSkyColors.top[0] = lerp(currentSkyColors.top[0], targetSkyColors.top[0], 0.005);
+  currentSkyColors.top[1] = lerp(currentSkyColors.top[1], targetSkyColors.top[1], 0.005);
+  currentSkyColors.top[2] = lerp(currentSkyColors.top[2], targetSkyColors.top[2], 0.005);
+  currentSkyColors.bottom[0] = lerp(currentSkyColors.bottom[0], targetSkyColors.bottom[0], 0.005);
+  currentSkyColors.bottom[1] = lerp(currentSkyColors.bottom[1], targetSkyColors.bottom[1], 0.005);
+  currentSkyColors.bottom[2] = lerp(currentSkyColors.bottom[2], targetSkyColors.bottom[2], 0.005);
+
   let targetSpeed = map(level * 150 + treble * 1.5, 0, 500, 2, 50);
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
-  drawStars(scrollSpeed * 0.3);
+  if (timeOfDay === 'night') {
+    drawStars(scrollSpeed * 0.3);
+  }
+
   drawClouds(scrollSpeed * 0.5);
   drawBuildings(scrollSpeed * 0.8);
   drawTrees(scrollSpeed * 1.2);
@@ -93,37 +124,7 @@ function draw() {
   }
 
   drawStreetLights(mid, scrollSpeed);
-
-  push();
-  translate(carX, carY);
-
-  let bounce = map(bass, 0, 255, 0, 8);
-  translate(0, sin(frameCount * 0.5) * bounce);
-
-  noStroke();
-  fill(0, 0, 0, 100);
-  ellipse(0, 45, 80, 15);
-
-  fill(200, 10, 40);
-  rect(-40, 10, 80, 25, 5);
-
-  fill(220, 10, 35);
-  rect(-25, -15, 50, 25, 8, 8, 0, 0);
-
-  fill(100, 150, 200, 150);
-  rect(-20, -10, 15, 18, 3);
-  rect(5, -10, 15, 18, 3);
-
-  fill(255, 255, 200);
-  ellipse(38, 20, 8, 6);
-
-  fill(255, 0, 0);
-  ellipse(-38, 20, 6, 5);
-
-  drawWheel(-20, 35, frameCount * scrollSpeed * 0.03);
-  drawWheel(20, 35, frameCount * scrollSpeed * 0.03);
-
-  pop();
+  drawCar(bass, mid, treble, scrollSpeed);
 
   if (!song.isPlaying()) {
     fill(255, 255, 100);
@@ -134,8 +135,8 @@ function draw() {
 }
 
 function drawNightSky() {
-  let topColor = [15, 10, 40];
-  let bottomColor = [40, 20, 60];
+  let topColor = currentSkyColors.top;
+  let bottomColor = currentSkyColors.bottom;
 
   for (let y = 0; y < height * 0.6; y++) {
     let inter = map(y, 0, height * 0.6, 0, 1);
@@ -276,6 +277,47 @@ function drawStreetLights(mid, speed) {
     fill(50, 80, light.brightness, map(mid, 0, 255, 50, 180));
     ellipse(light.x + 15, roadY + 5, light.glowSize * 2, 40);
   }
+}
+
+function drawCar(bass, mid, treble, speed) {
+  push();
+  translate(carX, carY);
+
+  let bounce = map(bass, 0, 255, 0, 8);
+  translate(0, sin(frameCount * 0.5) * bounce);
+
+  noStroke();
+  fill(0, 0, 0, 100);
+  ellipse(0, 45, 80, 15);
+
+  fill(200, 10, 40);
+  rect(-40, 10, 80, 25, 5);
+
+  fill(220, 10, 35);
+  rect(-25, -15, 50, 25, 8, 8, 0, 0);
+
+  fill(100, 150, 200, 150);
+  rect(-20, -10, 15, 18, 3);
+  rect(5, -10, 15, 18, 3);
+
+  let headlightBrightness = map(treble, 0, 255, 100, 255);
+  fill(60, 100, headlightBrightness);
+  ellipse(38, 20, 8, 6);
+
+  if (treble > 80) {
+    let beamLength = map(treble, 80, 255, 50, 200);
+    let beamAlpha = map(treble, 80, 255, 50, 150);
+    fill(60, 50, headlightBrightness, beamAlpha);
+    triangle(38, 20, beamLength, 12, beamLength, 28);
+  }
+
+  fill(0, 100, 100);
+  ellipse(-38, 20, 6, 5);
+
+  drawWheel(-20, 35, frameCount * speed * 0.03);
+  drawWheel(20, 35, frameCount * speed * 0.03);
+
+  pop();
 }
 
 function drawWheel(x, y, rotation) {
