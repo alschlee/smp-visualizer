@@ -26,6 +26,7 @@ let skyColors = {
 };
 let playbackRate = 1.0;
 
+// 음악 파일 미리 로드
 function preload() {
   song = loadSound('blinding_lights.mp3');
 }
@@ -35,12 +36,16 @@ function setup() {
   roadY = height * 0.7;
   carY = roadY - 40;
 
+  // 오디오 분석 도구 초기화
+  // p5.Amplitude: 음악의 전체 볼륨 레벨 분석
+  // p5.FFT: 주파수 스펙트럼 분석 (저음/중음/고음 구분)
   amplitude = new p5.Amplitude();
-  fft = new p5.FFT(0.8, 256);
+  fft = new p5.FFT(0.8, 256); // 0.8 = smoothing, 256 = bins
 
   amplitude.setInput(song);
   fft.setInput(song);
 
+  // 배경 오브젝트 생성
   for (let i = 0; i < 8; i++) {
     buildings.push(createBuilding(i * 150 + random(-20, 20)));
   }
@@ -82,11 +87,14 @@ function setup() {
 function draw() {
   drawNightSky();
 
+  // 음악 분석: 전체 볼륨과 주파수 대역별 에너지 추출
   let level = amplitude.getLevel();
-  let bass = fft.getEnergy(20, 150);
-  let mid = fft.getEnergy(400, 2600);
-  let treble = fft.getEnergy(5000, 20000);
+  let bass = fft.getEnergy(20, 150); // 저음역 (20-150Hz) - 차체 진동, 중앙선 두께
+  let mid = fft.getEnergy(400, 2600); // 중음역 (400-2600Hz) - 가로등 밝기, 차량 글로우
+  let treble = fft.getEnergy(5000, 20000); // 고음역 (5000-20000Hz) - 헤드라이트, 네온 플래시
 
+  // 곡 진행률에 따른 시간대 전환
+  // 전반부 50%는 밤, 후반부 50%는 8단계로 나눠 새벽→낮 전환
   if (song.isPlaying()) {
     let currentTime = song.currentTime();
     let duration = song.duration();
@@ -123,6 +131,7 @@ function draw() {
     }
   }
 
+  // lerp를 이용한 하늘 색상 부드러운 전환 (0.005 = 느린 전환 속도)
   targetSkyColors = skyColors[timeOfDay];
   currentSkyColors.top[0] = lerp(currentSkyColors.top[0], targetSkyColors.top[0], 0.005);
   currentSkyColors.top[1] = lerp(currentSkyColors.top[1], targetSkyColors.top[1], 0.005);
@@ -131,6 +140,7 @@ function draw() {
   currentSkyColors.bottom[1] = lerp(currentSkyColors.bottom[1], targetSkyColors.bottom[1], 0.005);
   currentSkyColors.bottom[2] = lerp(currentSkyColors.bottom[2], targetSkyColors.bottom[2], 0.005);
 
+  // 방향키로 재생 속도 조절: 상하(0.01씩), 좌우(0.02씩), 범위 0.5x~2.0x
   if (song.isPlaying()) {
     if (keyIsDown(UP_ARROW)) {
       playbackRate = constrain(playbackRate + 0.01, 0.5, 2.0);
@@ -147,22 +157,27 @@ function draw() {
     song.rate(playbackRate);
   }
 
+  // 음악 볼륨과 고음에 비례하는 스크롤 속도 계산, lerp로 부드럽게 적용
   let speedMultiplier = playbackRate;
   let targetSpeed = map(level * 150 + treble * 1.5, 0, 500, 2, 50) * speedMultiplier;
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
+  // 밤 시간대에만 별 표시
   if (timeOfDay === 'night' || timeOfDay === 'night2' || timeOfDay === 'night3') {
     drawStars(scrollSpeed * 0.3);
   }
 
+  // 시차 스크롤링: 멀리 있는 것일수록 느리게 이동
   drawClouds(scrollSpeed * 0.5);
   drawBuildings(scrollSpeed * 0.8);
   drawTrees(scrollSpeed * 1.2);
 
+  // 도로 그리기
   noStroke();
   fill(40, 40, 50);
   rect(0, roadY, width, height - roadY);
 
+  // 중앙선: 저음(bass)에 반응하여 두께 변화, 무한 스크롤
   let lineThickness = map(bass, 0, 255, 1, 12);
   stroke(255, 200);
   strokeWeight(lineThickness);
@@ -174,6 +189,7 @@ function draw() {
   drawStreetLights(mid, scrollSpeed);
   drawCar(bass, mid, treble, scrollSpeed);
 
+  // 고음이 150 이상일 때 네온 플래시 효과 발동
   if (treble > 150) {
     drawNeonFlash(treble);
   }
@@ -181,10 +197,12 @@ function draw() {
   drawUI(scrollSpeed, bass, mid, treble);
 }
 
+// 그라디언트 하늘 그리기: 위에서 아래로 색상 보간
 function drawNightSky() {
   let topColor = currentSkyColors.top;
   let bottomColor = currentSkyColors.bottom;
 
+  // 화면 상단 60%: top → bottom 색상 전환
   for (let y = 0; y < height * 0.6; y++) {
     let inter = map(y, 0, height * 0.6, 0, 1);
     let c = lerpColor(
@@ -196,6 +214,7 @@ function drawNightSky() {
     line(0, y, width, y);
   }
 
+  // 지평선까지: 약간 더 밝은 색으로 전환
   for (let y = height * 0.6; y < roadY; y++) {
     let inter = map(y, height * 0.6, roadY, 0, 1);
     let c = lerpColor(
@@ -208,6 +227,7 @@ function drawNightSky() {
   }
 }
 
+// 별: 왼쪽으로 스크롤, 화면 벗어나면 오른쪽에서 재생성
 function drawStars(speed) {
   for (let star of stars) {
     star.x -= speed;
@@ -221,6 +241,7 @@ function drawStars(speed) {
   }
 }
 
+// 구름: 3개의 타원을 겹쳐서 구름 모양 생성
 function drawClouds(speed) {
   for (let cloud of clouds) {
     cloud.x -= speed;
@@ -236,6 +257,7 @@ function drawClouds(speed) {
   }
 }
 
+// 빌딩 객체 생성
 function createBuilding(x) {
   return {
     x: x,
@@ -246,6 +268,7 @@ function createBuilding(x) {
   };
 }
 
+// 빌딩: 색상별 실루엣 + 격자 형태 창문
 function drawBuildings(speed) {
   for (let building of buildings) {
     building.x -= speed;
@@ -255,6 +278,7 @@ function drawBuildings(speed) {
       building.width = random(60, 120);
     }
 
+    // 빌딩 본체
     noStroke();
     if (building.color === 'purple') fill(60, 30, 80);
     else if (building.color === 'blue') fill(30, 50, 90);
@@ -262,6 +286,7 @@ function drawBuildings(speed) {
 
     rect(building.x, roadY - building.height, building.width, building.height);
 
+    // 창문 그리드 생성
     fill(200, 150, 50, 150);
     let windowCols = 3;
     let windowRows = building.windows;
@@ -278,6 +303,7 @@ function drawBuildings(speed) {
   }
 }
 
+// 나무: 기둥 + 3개 타원으로 나뭇잎 표현
 function drawTrees(speed) {
   for (let tree of trees) {
     tree.x -= speed;
@@ -286,10 +312,12 @@ function drawTrees(speed) {
       tree.height = random(40, 80);
     }
 
+    // 나무 기둥
     noStroke();
     fill(40, 30, 30);
     rect(tree.x - tree.width * 0.15, roadY - tree.height * 0.5, tree.width * 0.3, tree.height * 0.5);
 
+    // 나뭇잎 (중앙 + 좌우)
     fill(20, 60, 30);
     ellipse(tree.x, roadY - tree.height * 0.6, tree.width, tree.width);
     ellipse(tree.x - tree.width * 0.3, roadY - tree.height * 0.7, tree.width * 0.8, tree.width * 0.8);
@@ -297,6 +325,7 @@ function drawTrees(speed) {
   }
 }
 
+// 가로등: 중음(mid)에 반응하는 밝기와 글로우 크기
 function drawStreetLights(mid, speed) {
   for (let light of streetLights) {
     light.x -= speed;
@@ -304,53 +333,66 @@ function drawStreetLights(mid, speed) {
       light.x = width + random(150, 250);
     }
 
+    // 중음에 따라 밝기와 글로우 크기 조절
     light.brightness = lerp(light.brightness, map(mid, 0, 255, 50, 255), 0.3);
     light.glowSize = map(mid, 0, 255, 10, 100);
 
+    // 가로등 기둥
     stroke(80);
     strokeWeight(4);
     line(light.x, roadY, light.x, roadY - 120);
     line(light.x, roadY - 120, light.x + 30, roadY - 130);
 
+    // 다층 원으로 글로우 효과
     noStroke();
     for (let i = 5; i > 0; i--) {
       fill(50, 100, light.brightness, map(i, 5, 1, 20, 150));
       ellipse(light.x + 30, roadY - 130, light.glowSize * i * 0.5);
     }
 
+    // 전구 중심
     fill(60, 100, 255);
     ellipse(light.x + 30, roadY - 130, light.glowSize * 0.4);
 
+    // 바닥에 비치는 빛
     fill(50, 80, light.brightness, map(mid, 0, 255, 50, 180));
     ellipse(light.x + 15, roadY + 5, light.glowSize * 2, 40);
   }
 }
 
+// 자동차: 저음=진동, 중음=글로우, 고음=헤드라이트
 function drawCar(bass, mid, treble, speed) {
   push();
   translate(carX, carY);
 
+  // 저음에 반응하는 상하 진동
   let bounce = map(bass, 0, 255, 0, 8);
   translate(0, sin(frameCount * 0.5) * bounce);
 
+  // 그림자
   noStroke();
   fill(0, 0, 0, 100);
   ellipse(0, 45, 80, 15);
 
+  // 차체
   fill(200, 10, 40);
   rect(-40, 10, 80, 25, 5);
 
+  // 지붕
   fill(220, 10, 35);
   rect(-25, -15, 50, 25, 8, 8, 0, 0);
 
+  // 창문
   fill(100, 150, 200, 150);
   rect(-20, -10, 15, 18, 3);
   rect(5, -10, 15, 18, 3);
 
+  // 헤드라이트: 고음에 반응하는 밝기
   let headlightBrightness = map(treble, 0, 255, 100, 255);
   fill(60, 100, headlightBrightness);
   ellipse(38, 20, 8, 6);
 
+  // 헤드라이트 빔 (고음 80 이상)
   if (treble > 80) {
     let beamLength = map(treble, 80, 255, 50, 200);
     let beamAlpha = map(treble, 80, 255, 50, 150);
@@ -358,12 +400,15 @@ function drawCar(bass, mid, treble, speed) {
     triangle(38, 20, beamLength, 12, beamLength, 28);
   }
 
+  // 후미등
   fill(0, 100, 100);
   ellipse(-38, 20, 6, 5);
 
+  // 바퀴 (속도에 따라 회전)
   drawWheel(-20, 35, frameCount * speed * 0.03);
   drawWheel(20, 35, frameCount * speed * 0.03);
 
+  // 중음 100 이상일 때 차체 윤곽선 글로우
   if (mid > 100) {
     noFill();
     stroke(320, 100, 255, map(mid, 100, 255, 80, 255));
@@ -374,16 +419,19 @@ function drawCar(bass, mid, treble, speed) {
   pop();
 }
 
+// 바퀴: 회전하는 스포크와 중심 허브
 function drawWheel(x, y, rotation) {
   push();
   translate(x, y);
   rotate(rotation);
 
+  // 타이어
   fill(30);
   stroke(50);
   strokeWeight(2);
   ellipse(0, 0, 18, 18);
 
+  // 스포크 (5개)
   stroke(150);
   strokeWeight(2);
   for (let i = 0; i < 5; i++) {
@@ -391,6 +439,7 @@ function drawWheel(x, y, rotation) {
     line(0, 0, cos(angle) * 6, sin(angle) * 6);
   }
 
+  // 중심 허브
   fill(100);
   noStroke();
   ellipse(0, 0, 6);
@@ -398,16 +447,19 @@ function drawWheel(x, y, rotation) {
   pop();
 }
 
+// 네온 플래시: 고음 150 이상에서 발동
 function drawNeonFlash(treble) {
   noFill();
   let alpha = map(treble, 150, 255, 100, 255);
 
+  // 다층 테두리 효과
   for (let i = 0; i < 5; i++) {
     stroke(320, 100, 255, alpha / (i + 1));
     strokeWeight(25 - i * 5);
     rect(10 + i * 10, 10 + i * 10, width - 20 - i * 20, height - 20 - i * 20);
   }
 
+  // 랜덤 네온 라인 (50% 확률)
   for (let i = 0; i < 3; i++) {
     if (random() > 0.5) {
       stroke(random([320, 280, 180, 60]), 100, 255, alpha);
@@ -421,7 +473,9 @@ function drawNeonFlash(treble) {
   }
 }
 
+// UI: 속도계 + 재생 정보 + 조작 안내
 function drawUI(speed, bass, mid, treble) {
+  // 우하단 아날로그 속도계
   push();
   translate(width - 100, height - 100);
 
@@ -430,11 +484,13 @@ function drawUI(speed, bass, mid, treble) {
   strokeWeight(3);
   arc(0, 0, 80, 80, -150, 150);
 
+  // 속도계 바늘 (속도에 따라 각도 변화)
   let angle = map(speed, 0, 50, -150, 150);
   stroke(map(speed, 0, 50, 120, 0), 100, 255);
   strokeWeight(4);
   line(0, 0, cos(angle) * 35, sin(angle) * 35);
 
+  // 숫자 표시
   noStroke();
   fill(255);
   textAlign(CENTER, CENTER);
@@ -445,6 +501,7 @@ function drawUI(speed, bass, mid, treble) {
 
   pop();
 
+  // 중앙 시작 안내 메시지
   fill(255, 200);
   textAlign(CENTER);
   textSize(20);
@@ -455,15 +512,18 @@ function drawUI(speed, bass, mid, treble) {
     text("클릭해서 드라이브 시작하기", width / 2, height / 2);
   }
 
+  // 하단 조작법 안내
   textSize(12);
   fill(255, 150);
   text("클릭: 재생/정지 | 방향키 ←→↑↓: 속도 조절", width / 2, height - 20);
 
+  // 좌하단 상세 정보
   textAlign(LEFT);
   textSize(10);
   text(`속도: ${floor(speed)} | 재생속도: ${playbackRate.toFixed(2)}x`, 10, height - 10);
 }
 
+// 마우스 클릭으로 재생/일시정지
 function mousePressed() {
   if (song.isPlaying()) {
     song.pause();
