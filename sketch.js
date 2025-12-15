@@ -44,13 +44,7 @@ function setup() {
 }
 
 function draw() {
-  // 하늘 그리기
-  for (let y = 0; y < 400; y++) {
-    let inter = map(y, 0, 400, 0, 1);
-    let c = lerpColor(color(15, 10, 40), color(40, 20, 60), inter);
-    stroke(c);
-    line(0, y, width, y);
-  }
+  drawNightSky();
 
   let level = amplitude.getLevel();
   let targetSpeed = map(level * 150, 0, 150, 2, 30);
@@ -114,6 +108,35 @@ function draw() {
     textSize(24);
     textAlign(CENTER);
     text("클릭해서 드라이브 시작하기", width / 2, height / 2);
+  }
+}
+
+function drawNightSky() {
+  let topColor = [15, 10, 40];
+  let bottomColor = [40, 20, 60];
+
+  // 상단 그라데이션
+  for (let y = 0; y < height * 0.6; y++) {
+    let inter = map(y, 0, height * 0.6, 0, 1);
+    let c = lerpColor(
+        color(topColor[0], topColor[1], topColor[2]),
+        color(bottomColor[0], bottomColor[1], bottomColor[2]),
+        inter
+    );
+    stroke(c);
+    line(0, y, width, y);
+  }
+
+  // 하단 그라데이션
+  for (let y = height * 0.6; y < roadY; y++) {
+    let inter = map(y, height * 0.6, roadY, 0, 1);
+    let c = lerpColor(
+        color(bottomColor[0], bottomColor[1], bottomColor[2]),
+        color(bottomColor[0] + 20, bottomColor[1] + 10, bottomColor[2] + 20),
+        inter
+    );
+    stroke(c);
+    line(0, y, width, y);
   }
 }
 
