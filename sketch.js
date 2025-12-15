@@ -4,6 +4,7 @@ let carY;
 let song;
 let amplitude;
 let scrollSpeed = 0;
+let buildings = [];
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -16,6 +17,11 @@ function setup() {
 
   amplitude = new p5.Amplitude();
   amplitude.setInput(song);
+
+  // 건물
+  for (let i = 0; i < 8; i++) {
+    buildings.push(createBuilding(i * 150 + random(-20, 20)));
+  }
 }
 
 function draw() {
@@ -30,6 +36,9 @@ function draw() {
   let level = amplitude.getLevel();
   let targetSpeed = map(level * 150, 0, 150, 2, 30);
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
+
+  // 건물 그리기
+  drawBuildings(scrollSpeed * 0.8);
 
   // 도로 그리기
   noStroke();
@@ -76,6 +85,49 @@ function draw() {
     textSize(24);
     textAlign(CENTER);
     text("클릭해서 드라이브 시작하기", width / 2, height / 2);
+  }
+}
+
+function createBuilding(x) {
+  return {
+    x: x,
+    width: random(60, 120),
+    height: random(100, 200),
+    windows: floor(random(3, 8)),
+    color: random(['purple', 'blue', 'pink'])
+  };
+}
+
+function drawBuildings(speed) {
+  for (let building of buildings) {
+    building.x -= speed;
+    if (building.x < -building.width) {
+      building.x = width + random(50, 150);
+      building.height = random(100, 200);
+      building.width = random(60, 120);
+    }
+
+    noStroke();
+    if (building.color === 'purple') fill(60, 30, 80);
+    else if (building.color === 'blue') fill(30, 50, 90);
+    else fill(80, 40, 90);
+
+    rect(building.x, roadY - building.height, building.width, building.height);
+
+    // 창문
+    fill(200, 150, 50, 150);
+    let windowCols = 3;
+    let windowRows = building.windows;
+    let windowW = building.width / (windowCols + 1);
+    let windowH = building.height / (windowRows + 2);
+
+    for (let col = 0; col < windowCols; col++) {
+      for (let row = 0; row < windowRows; row++) {
+        let wx = building.x + (col + 0.7) * windowW;
+        let wy = roadY - building.height + (row + 1) * windowH;
+        rect(wx, wy, windowW * 0.5, windowH * 0.6);
+      }
+    }
   }
 }
 
