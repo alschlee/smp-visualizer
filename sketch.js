@@ -8,6 +8,7 @@ let buildings = [];
 let streetLights = [];
 let trees = [];
 let stars = [];
+let clouds = [];
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -40,13 +41,21 @@ function setup() {
     });
   }
 
-  // 별 생성
   for (let i = 0; i < 80; i++) {
     stars.push({
       x: random(width),
       y: random(height * 0.5),
       size: random(1, 3),
       twinkle: random(100, 255)
+    });
+  }
+
+  // 구름 생성
+  for (let i = 0; i < 5; i++) {
+    clouds.push({
+      x: random(width),
+      y: random(50, 200),
+      size: random(40, 80)
     });
   }
 }
@@ -59,6 +68,7 @@ function draw() {
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
   drawStars(scrollSpeed * 0.3);
+  drawClouds(scrollSpeed * 0.5);
   drawBuildings(scrollSpeed * 0.8);
   drawTrees(scrollSpeed * 1.2);
 
@@ -151,6 +161,21 @@ function drawStars(speed) {
     noStroke();
     fill(255, star.twinkle);
     ellipse(star.x, star.y, star.size);
+  }
+}
+
+function drawClouds(speed) {
+  for (let cloud of clouds) {
+    cloud.x -= speed;
+    if (cloud.x < -100) {
+      cloud.x = width + 100;
+      cloud.y = random(50, 200);
+    }
+    noStroke();
+    // 안보임,, 확인하기
+    fill(50, 40, 80, 100);
+    ellipse(cloud.x, cloud.y, cloud.size, cloud.size * 0.6);
+    ellipse(cloud.x + 20, cloud.y, cloud.size * 0.8, cloud.size * 0.5);
   }
 }
 
