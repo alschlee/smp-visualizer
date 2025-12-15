@@ -15,6 +15,13 @@ let currentSkyColors = { top: [15, 10, 40], bottom: [40, 20, 60] };
 let targetSkyColors = { top: [15, 10, 40], bottom: [40, 20, 60] };
 let skyColors = {
   night: { top: [15, 10, 40], bottom: [40, 20, 60] },
+  night2: { top: [25, 20, 55], bottom: [50, 30, 75] },
+  night3: { top: [35, 30, 70], bottom: [60, 40, 90] },
+  dawn1: { top: [60, 50, 100], bottom: [90, 70, 120] },
+  dawn2: { top: [90, 80, 130], bottom: [120, 100, 150] },
+  dawn3: { top: [120, 120, 160], bottom: [150, 140, 180] },
+  day1: { top: [150, 160, 200], bottom: [180, 180, 210] },
+  day2: { top: [170, 190, 230], bottom: [200, 210, 240] },
   day: { top: [135, 206, 250], bottom: [200, 230, 255] }
 };
 
@@ -83,10 +90,35 @@ function draw() {
   if (song.isPlaying()) {
     let currentTime = song.currentTime();
     let duration = song.duration();
+    let nightDuration = duration * 0.5;
+    let transitionDuration = duration * 0.5;
+    let section = transitionDuration / 8;
 
-    if (currentTime < duration * 0.6) {
+    if (currentTime < nightDuration) {
       timeOfDay = 'night';
-    } else {
+    }
+    else if (currentTime < nightDuration + section) {
+      timeOfDay = 'night2';
+    }
+    else if (currentTime < nightDuration + section * 2) {
+      timeOfDay = 'night3';
+    }
+    else if (currentTime < nightDuration + section * 3) {
+      timeOfDay = 'dawn1';
+    }
+    else if (currentTime < nightDuration + section * 4) {
+      timeOfDay = 'dawn2';
+    }
+    else if (currentTime < nightDuration + section * 5) {
+      timeOfDay = 'dawn3';
+    }
+    else if (currentTime < nightDuration + section * 6) {
+      timeOfDay = 'day1';
+    }
+    else if (currentTime < nightDuration + section * 7) {
+      timeOfDay = 'day2';
+    }
+    else {
       timeOfDay = 'day';
     }
   }
@@ -103,7 +135,7 @@ function draw() {
   let targetSpeed = map(level * 150 + treble * 1.5, 0, 500, 2, 50);
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
-  if (timeOfDay === 'night') {
+  if (timeOfDay === 'night' || timeOfDay === 'night2' || timeOfDay === 'night3') {
     drawStars(scrollSpeed * 0.3);
   }
 
