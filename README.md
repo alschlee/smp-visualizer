@@ -6,6 +6,12 @@ p5.js와 p5.sound.js를 활용한 음악 반응형 비주얼라이저
 
 ## 주요 기능
 
+<div style="display: flex; justify-content: space-between;">
+  <img src="https://github.com/user-attachments/assets/9c0051f1-a740-48d6-b519-5344da141e8c" width="400" />
+  <img src="https://github.com/user-attachments/assets/19d0c8bb-3af0-4b8c-b94b-e28c4273053d" width="400" />
+</div>
+
+
 - 화면 클릭 시 음악 로드 및 재생
 - p5.Amplitude / p5.FFT를 이용한 오디오 분석
 - 음악에 따라 도로, 자동차, 가로등, 하늘 색상이 실시간으로 변화
