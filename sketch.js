@@ -5,6 +5,7 @@ let song;
 let amplitude;
 let scrollSpeed = 0;
 let buildings = [];
+let streetLights = [];
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -21,6 +22,14 @@ function setup() {
   // 건물
   for (let i = 0; i < 8; i++) {
     buildings.push(createBuilding(i * 150 + random(-20, 20)));
+  }
+
+  // 가로등
+  for (let i = 0; i < 6; i++) {
+    streetLights.push({
+      x: i * 200 + random(-30, 30),
+      brightness: 150
+    });
   }
 }
 
@@ -53,6 +62,9 @@ function draw() {
     line(x, roadY + 50, x + 30, roadY + 50);
   }
 
+  // 가로등 그리기
+  drawStreetLights(scrollSpeed);
+
   // 자동차 그리기
   push();
   translate(carX, carY);
@@ -74,6 +86,12 @@ function draw() {
   fill(100, 150, 200, 150);
   rect(-20, -10, 15, 18, 3);
   rect(5, -10, 15, 18, 3);
+
+  fill(255, 255, 200);
+  ellipse(38, 20, 8, 6);
+
+  fill(255, 0, 0);
+  ellipse(-38, 20, 6, 5);
 
   drawWheel(-20, 35, frameCount * scrollSpeed * 0.03);
   drawWheel(20, 35, frameCount * scrollSpeed * 0.03);
@@ -128,6 +146,27 @@ function drawBuildings(speed) {
         rect(wx, wy, windowW * 0.5, windowH * 0.6);
       }
     }
+  }
+}
+
+function drawStreetLights(speed) {
+  for (let light of streetLights) {
+    light.x -= speed;
+    if (light.x < -50) {
+      light.x = width + random(150, 250);
+    }
+
+    stroke(80);
+    strokeWeight(4);
+    line(light.x, roadY, light.x, roadY - 120);
+    line(light.x, roadY - 120, light.x + 30, roadY - 130);
+
+    noStroke();
+    fill(255, 255, 200, 100);
+    ellipse(light.x + 30, roadY - 130, 40);
+
+    fill(255, 255, 150);
+    ellipse(light.x + 30, roadY - 130, 20);
   }
 }
 
