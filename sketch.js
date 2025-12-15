@@ -6,6 +6,7 @@ let amplitude;
 let scrollSpeed = 0;
 let buildings = [];
 let streetLights = [];
+let trees = [];
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -31,6 +32,15 @@ function setup() {
       brightness: 150
     });
   }
+
+  // 나무 생성
+  for (let i = 0; i < 12; i++) {
+    trees.push({
+      x: i * 100 + random(-20, 20),
+      height: random(40, 80),
+      width: random(15, 25)
+    });
+  }
 }
 
 function draw() {
@@ -48,6 +58,7 @@ function draw() {
 
   // 건물 그리기
   drawBuildings(scrollSpeed * 0.8);
+  drawTrees(scrollSpeed * 1.2);
 
   // 도로 그리기
   noStroke();
@@ -146,6 +157,25 @@ function drawBuildings(speed) {
         rect(wx, wy, windowW * 0.5, windowH * 0.6);
       }
     }
+  }
+}
+
+function drawTrees(speed) {
+  for (let tree of trees) {
+    tree.x -= speed;
+    if (tree.x < -30) {
+      tree.x = width + 30;
+      tree.height = random(40, 80);
+    }
+
+    noStroke();
+    fill(40, 30, 30);
+    rect(tree.x - tree.width * 0.15, roadY - tree.height * 0.5, tree.width * 0.3, tree.height * 0.5);
+
+    fill(20, 60, 30);
+    ellipse(tree.x, roadY - tree.height * 0.6, tree.width, tree.width);
+    ellipse(tree.x - tree.width * 0.3, roadY - tree.height * 0.7, tree.width * 0.8, tree.width * 0.8);
+    ellipse(tree.x + tree.width * 0.3, roadY - tree.height * 0.7, tree.width * 0.8, tree.width * 0.8);
   }
 }
 
