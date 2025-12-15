@@ -9,6 +9,7 @@ let streetLights = [];
 let trees = [];
 let stars = [];
 let clouds = [];
+let fft;
 
 function preload() {
   song = loadSound('blinding_lights.mp3');
@@ -20,7 +21,10 @@ function setup() {
   carY = roadY - 40;
 
   amplitude = new p5.Amplitude();
+  fft = new p5.FFT(0.8, 256);
+
   amplitude.setInput(song);
+  fft.setInput(song);
 
   for (let i = 0; i < 8; i++) {
     buildings.push(createBuilding(i * 150 + random(-20, 20)));
@@ -64,7 +68,11 @@ function draw() {
   drawNightSky();
 
   let level = amplitude.getLevel();
-  let targetSpeed = map(level * 150, 0, 150, 2, 30);
+  let bass = fft.getEnergy(20, 150);
+  let mid = fft.getEnergy(400, 2600);
+  let treble = fft.getEnergy(5000, 20000);
+
+  let targetSpeed = map(level * 150 + treble * 1.5, 0, 500, 2, 50);
   scrollSpeed = lerp(scrollSpeed, targetSpeed, 0.2);
 
   drawStars(scrollSpeed * 0.3);
@@ -76,8 +84,9 @@ function draw() {
   fill(40, 40, 50);
   rect(0, roadY, width, height - roadY);
 
+  let lineThickness = map(bass, 0, 255, 1, 12);
   stroke(255, 200);
-  strokeWeight(2);
+  strokeWeight(lineThickness);
   for (let i = 0; i < 20; i++) {
     let x = (i * 60 - (frameCount * scrollSpeed * 0.5) % 60) % width;
     line(x, roadY + 50, x + 30, roadY + 50);
@@ -88,7 +97,7 @@ function draw() {
   push();
   translate(carX, carY);
 
-  let bounce = map(level, 0, 1, 0, 5);
+  let bounce = map(bass, 0, 255, 0, 8);
   translate(0, sin(frameCount * 0.5) * bounce);
 
   noStroke();
