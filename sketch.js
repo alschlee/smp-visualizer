@@ -87,7 +87,6 @@ function draw() {
   let mid = fft.getEnergy(400, 2600);
   let treble = fft.getEnergy(5000, 20000);
 
-  // 시간대 변화
   if (song.isPlaying()) {
     let currentTime = song.currentTime();
     let duration = song.duration();
@@ -124,7 +123,6 @@ function draw() {
     }
   }
 
-  // 하늘 색상 전환
   targetSkyColors = skyColors[timeOfDay];
   currentSkyColors.top[0] = lerp(currentSkyColors.top[0], targetSkyColors.top[0], 0.005);
   currentSkyColors.top[1] = lerp(currentSkyColors.top[1], targetSkyColors.top[1], 0.005);
@@ -133,7 +131,6 @@ function draw() {
   currentSkyColors.bottom[1] = lerp(currentSkyColors.bottom[1], targetSkyColors.bottom[1], 0.005);
   currentSkyColors.bottom[2] = lerp(currentSkyColors.bottom[2], targetSkyColors.bottom[2], 0.005);
 
-  // 방향키로 재생 속도 조절
   if (song.isPlaying()) {
     if (keyIsDown(UP_ARROW)) {
       playbackRate = constrain(playbackRate + 0.01, 0.5, 2.0);
@@ -177,18 +174,11 @@ function draw() {
   drawStreetLights(mid, scrollSpeed);
   drawCar(bass, mid, treble, scrollSpeed);
 
-  if (!song.isPlaying()) {
-    fill(255, 255, 100);
-    textSize(24);
-    textAlign(CENTER);
-    text("클릭해서 드라이브 시작하기", width / 2, height / 2);
+  if (treble > 150) {
+    drawNeonFlash(treble);
   }
 
-  // 속도 정보 표시
-  fill(255, 150);
-  textAlign(LEFT);
-  textSize(12);
-  text(`재생속도: ${playbackRate.toFixed(2)}x`, 10, 20);
+  drawUI(scrollSpeed, bass, mid, treble);
 }
 
 function drawNightSky() {
@@ -374,6 +364,13 @@ function drawCar(bass, mid, treble, speed) {
   drawWheel(-20, 35, frameCount * speed * 0.03);
   drawWheel(20, 35, frameCount * speed * 0.03);
 
+  if (mid > 100) {
+    noFill();
+    stroke(320, 100, 255, map(mid, 100, 255, 80, 255));
+    strokeWeight(map(mid, 100, 255, 2, 5));
+    rect(-40, 10, 80, 25, 5);
+  }
+
   pop();
 }
 
@@ -399,6 +396,72 @@ function drawWheel(x, y, rotation) {
   ellipse(0, 0, 6);
 
   pop();
+}
+
+function drawNeonFlash(treble) {
+  noFill();
+  let alpha = map(treble, 150, 255, 100, 255);
+
+  for (let i = 0; i < 5; i++) {
+    stroke(320, 100, 255, alpha / (i + 1));
+    strokeWeight(25 - i * 5);
+    rect(10 + i * 10, 10 + i * 10, width - 20 - i * 20, height - 20 - i * 20);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    if (random() > 0.5) {
+      stroke(random([320, 280, 180, 60]), 100, 255, alpha);
+      strokeWeight(random(2, 6));
+      let x1 = random(width);
+      let y1 = random(height * 0.4);
+      let x2 = random(width);
+      let y2 = random(height * 0.4);
+      line(x1, y1, x2, y2);
+    }
+  }
+}
+
+function drawUI(speed, bass, mid, treble) {
+  push();
+  translate(width - 100, height - 100);
+
+  noFill();
+  stroke(255, 150);
+  strokeWeight(3);
+  arc(0, 0, 80, 80, -150, 150);
+
+  let angle = map(speed, 0, 50, -150, 150);
+  stroke(map(speed, 0, 50, 120, 0), 100, 255);
+  strokeWeight(4);
+  line(0, 0, cos(angle) * 35, sin(angle) * 35);
+
+  noStroke();
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text(floor(speed), 0, 15);
+  textSize(10);
+  text("km/h", 0, 30);
+
+  pop();
+
+  fill(255, 200);
+  textAlign(CENTER);
+  textSize(20);
+
+  if (!song.isPlaying()) {
+    fill(255, 255, 100);
+    textSize(24);
+    text("클릭해서 드라이브 시작하기", width / 2, height / 2);
+  }
+
+  textSize(12);
+  fill(255, 150);
+  text("클릭: 재생/정지 | 방향키 ←→↑↓: 속도 조절", width / 2, height - 20);
+
+  textAlign(LEFT);
+  textSize(10);
+  text(`속도: ${floor(speed)} | 재생속도: ${playbackRate.toFixed(2)}x`, 10, height - 10);
 }
 
 function mousePressed() {
